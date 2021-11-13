@@ -137,6 +137,16 @@ HSV center[50][50];
 #define MIN_SATURATION 50
 #define MIN_VALUE 30
 
+inline get_min(int a, int b)
+{
+    return (a < b) ? a : b;
+}
+
+inline get_max(int a, int b)
+{
+    return (a > b) ? a : b;
+}
+
 void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibration_file)
 {
     Bmp bmp = read_bmp(bitmap_file);
@@ -154,8 +164,8 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
             // update saturation and value meet the thresholds
             if (center[m][n].saturation >= MIN_SATURATION && center[m][n].value >= MIN_VALUE)
             {
-                minHue = (minHue > center[m][n].hue ? center[m][n].hue : minHue);
-                maxHue = (maxHue < center[m][n].hue ? center[m][n].hue : maxHue);
+                minHue = get_min(minHue, center[m][n].hue);
+                maxHue = get_max(minHue, center[m][n].hue);
             }
         }
     }
@@ -246,13 +256,13 @@ void bounding_boxes(Bitmap01 *bitmap01)
         for (int j = 0; j < bitmap01->w; j++)
             if (region = bitmap01->regions[i][j])
             {
-                bitmap01->boundingBoxes[region - 1].max_x = (bitmap01->boundingBoxes[region - 1].max_x < j) ? j : bitmap01->boundingBoxes[region - 1].max_x;
+                bitmap01->boundingBoxes[region - 1].max_x = get_max(bitmap01->boundingBoxes[region - 1].max_x, j);
 
-                bitmap01->boundingBoxes[region - 1].max_y = (bitmap01->boundingBoxes[region - 1].max_y < i) ? i : bitmap01->boundingBoxes[region - 1].max_y;
+                bitmap01->boundingBoxes[region - 1].max_y = get_max(bitmap01->boundingBoxes[region - 1].max_y, i);
 
-                bitmap01->boundingBoxes[region - 1].min_x = (bitmap01->boundingBoxes[region - 1].min_x > j) ? j : bitmap01->boundingBoxes[region - 1].min_x;
+                bitmap01->boundingBoxes[region - 1].min_x = get_min(bitmap01->boundingBoxes[region - 1].max_x, j);
 
-                bitmap01->boundingBoxes[region - 1].min_y = (bitmap01->boundingBoxes[region - 1].min_x > i) ? i : bitmap01->boundingBoxes[region - 1].min_y;
+                bitmap01->boundingBoxes[region - 1].min_y = get_min(bitmap01->boundingBoxes[region - 1].max_y, i);
             }
 
     for (int i = 0; i < bitmap01->nbRegions; i++)
