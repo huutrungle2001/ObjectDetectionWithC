@@ -14,8 +14,10 @@ HSV center[50][50];
 
 typedef struct
 {
-    int m, n;
-    int **pixel;
+    int w, h;
+    int **pixels;
+    int **regions;
+    int nbRegions;
 } Bitmap01;
 
 void printCalibration(Calibration cal)
@@ -167,6 +169,52 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
     printf("%s %d %d %d %d\n", object_name, middle_hue, max_hue_difference, MIN_SATURATION, MIN_VALUE);
 }
 
+int dx[] = {-1, 0, 1, 0};
+int dy[] = {0, -1, 0, 1};
+
+void dfs(int i, int j, Bitmap01 *bitmap01)
+{
+    bitmap01->regions[i][j] = bitmap01->nbRegions;
+    for (int h = 0; h < 4; h++)
+    {
+        int x = i + dx[h], y = j + dy[h];
+        if (x >= 0 && x < bitmap01->w && y >= 0 && y < bitmap01->h)
+        {
+            dfs(x, y, bitmap01);
+        }
+    }
+}
+
+void generate_regions(Bitmap01 *bitmap01)
+{
+    int **mark = bitmap01->regions;
+
+    mark = malloc(bitmap01->h * sizeof(int *));
+    if (mark == NULL)
+    {
+        fprintf(stderr, "out of memory\n");
+        exit(0);
+    }
+    for (int i = 0; i < bitmap01->w; i++)
+    {
+        mark[i] = malloc(bitmap01->w * sizeof(int));
+        if (mark[i] == NULL)
+        {
+            fprintf(stderr, "out of memory\n");
+            exit(0);
+        }
+    }
+
+    memset(bitmap01->regions, 0, sizeof(bitmap01->regions));
+
+    for (int i = 0; i < bitmap01->h; i++)
+        for (int j = 0; j < bitmap01->w; j++)
+            if (bitmap01->pixels[i][j] == 1 && bitmap01->regions[i][j] == 0)
+            {
+                bitmap01->nbRegions++;
+                dfs(i, j, bitmap01);
+            }
+}
 int main(int argc, char **argv)
 {
     if (checkInput(argc, argv) == false)
