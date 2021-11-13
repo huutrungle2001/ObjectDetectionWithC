@@ -224,7 +224,6 @@ void generate_regions(Bitmap01 *bitmap01)
             }
 }
 
-<<<<<<< HEAD
 bool large_enough(BoundingBox *boundingBox)
 {
     return (boundingBox->max_x - boundingBox->min_x >= 19) && (boundingBox->max_y - boundingBox->min_y >= 19);
@@ -267,7 +266,6 @@ void bounding_boxes(Bitmap01 *bitmap01)
 
             printf("Detected %s: %d %d %d %d\n", object_name, x, y, w, h);
         }
-=======
 void generate_blackwhite(Bmp bmp, Bitmap01 *bitmap01, Calibration cal)
 {
     HSV hsv[bmp.height][bmp.width];
@@ -280,7 +278,6 @@ void generate_blackwhite(Bmp bmp, Bitmap01 *bitmap01, Calibration cal)
             bitmap01->pixels[i][j] = diff < cal.MaxDiff ? 1 : 0;
         }
     }
->>>>>>> dac9d06b5a956d5cdc0e6e2ee0fdf65f514fff5b
 }
 
 int main(int argc, char **argv)
