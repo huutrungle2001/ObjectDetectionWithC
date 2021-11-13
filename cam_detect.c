@@ -286,9 +286,6 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     strcpy(bitmap01->calibration_code, cal.Objects);
 
     HSV hsv;
-    Bmp threshold;
-    threshold.height = bmp->height;
-    threshold.width = bmp->width;
     for (int i = 0; i < bmp->height; i++)
     {
         for (int j = 0; j < bmp->width; j++)
@@ -305,6 +302,30 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
             }
         }
     }
+}
+
+
+
+void writeThresholdImage(Bitmap01 *bitmap01, char *filename){
+    Bmp bmp;
+    bmp.height = bitmap01->h;
+    bmp.width = bitmap01->w;
+
+    for(int i = 0; i < bmp.height; i++){
+        for(int j = 0; j < bmp.width; j++){
+            if(bitmap01->pixels[i][j] == 1){
+                for(int k = 0; k < 3; k++){
+                    bmp.pixels[i][j][k] = 255;
+                }
+            }else{
+                for(int k = 0; k < 3; k++){
+                    bmp.pixels[i][j][k] = 0;
+                }
+            }
+        }
+    }
+
+    write_bmp(bmp, filename);
 }
 
 int main(int argc, char **argv)
