@@ -46,10 +46,7 @@ void printCalibration(Calibration *cal){
     printf("%s: Hue: %d (Max. Diff %d), Min. SV: %d %d\n", cal->Objects, cal->Hue, cal->MaxDiff, cal->MinSat, cal->MinVal);
 }
 
-void ShowCalibration(int argc, char *mode, char *filename){
-    // Check input
-    checkInput(argc, mode, filename);    
-    
+void ShowCalibration(char *filename){
     // Open file to read
     FILE *file = freopen(filename, "r", stdin);
 
@@ -84,7 +81,33 @@ void ShowCalibration(int argc, char *mode, char *filename){
     free(file);
 }
 
+void Calibration(char *filename){
+    Bmp bmp = read_bmp("images/coin.bmp");
+    int midX = bmp.width/2;
+    int midY = bmp.height/2;
+
+    HSV center[50][50];
+    for(int i = midY - 25, m = 0; i < midY + 25 && m < 50; i++, m++) {
+        for(int j = midX - 25, n = 0; j < midX + 25 && n < 50; j++, n++) {
+            center[m][n] = rgb2hsv(bmp.pixels[i][j]);
+        }
+    }
+
+    for(int i = 0; i < 50; i++) {
+        for(int j = 0; j < 50; j++) {
+            printf("(%d %d %d) ", center[i][j].hue, center[i][j].saturation, center[i][j].value);
+        }
+        printf("\n");
+    }
+}
+
+void Detection(){
+
+}
+
 int main(int argc, char **argv){
+    // Check input
+    checkInput(argc, mode, filename);   
     char *mode = argv[1];
     char *imagesFilepath = argv[argc - 1];
 
@@ -92,23 +115,12 @@ int main(int argc, char **argv){
     if(strcmp(mode, "s") == 0){
         // Get calibration file path from argument vector.
         char *calibrationFilepath = argv[2];
-        ShowCalibration(argc, mode, calibrationFilepath);
+        ShowCalibration(calibrationFilepath);
     }else if(strcmp(mode, "d") == 0){
-
+        Calibration();
     }else if(strcmp(mode, "c") == 0){
-
+        Detection();
     }
-    
-    // Bmp bmp = read_bmp("images/blueblob.bmp");
-    // for(int i = 0; i < bmp.height; i++){
-    //     for(int j = 0; j < bmp.width; j++){
-    //         for(int k = 0; k < 3; k++){
-    //             printf("%d,", bmp.pixels[i][j][k]);
-    //         }
-    //         printf(" ");
-    //     }
-    //     printf("\n");
-    // }
 }
 
 
