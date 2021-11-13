@@ -317,6 +317,13 @@ int main(int argc, char **argv)
         else // mode == "d" - detect object
         {
             // do something here
+            Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
+            Bmp bmp; // them code doc bitmap vao day
+
+            for (int i = 0; i < nbCalibration; i++)
+            {
+                generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
+            }
         }
     } // mode == "c" - calibration
     else
