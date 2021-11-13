@@ -215,6 +215,21 @@ void generate_regions(Bitmap01 *bitmap01)
                 dfs(i, j, bitmap01);
             }
 }
+
+void generate_blackwhite(Bmp bmp, Bitmap01 *bitmap01, Calibration cal)
+{
+    HSV hsv[bmp.height][bmp.width];
+    for (int i = 0; i < bmp.height; i++)
+    {
+        for (int j = 0; j < bmp.width; j++)
+        {
+            hsv[i][j] = rgb2hsv(bmp.pixels[i][j]);
+            int diff = hue_difference(hsv[i][j].hue, cal.Hue);
+            bitmap01->pixels[i][j] = diff < cal.MaxDiff ? 1 : 0;
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     if (checkInput(argc, argv) == false)
