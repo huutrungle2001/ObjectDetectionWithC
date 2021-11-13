@@ -276,15 +276,17 @@ void bounding_boxes(Bitmap01 *bitmap01)
 
             printf("Detected %s: %d %d %d %d\n", object_name, x, y, w, h);
         }
-void generate_blackwhite(Bmp bmp, Bitmap01 *bitmap01, Calibration cal)
+}
+
+void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
 {
-    HSV hsv[bmp.height][bmp.width];
-    for (int i = 0; i < bmp.height; i++)
+    HSV hsv;
+    for (int i = 0; i < bmp->height; i++)
     {
-        for (int j = 0; j < bmp.width; j++)
+        for (int j = 0; j < bmp->width; j++)
         {
-            hsv[i][j] = rgb2hsv(bmp.pixels[i][j]);
-            int diff = hue_difference(hsv[i][j].hue, cal.Hue);
+            hsv = rgb2hsv(bmp->pixels[i][j]);
+            int diff = hue_difference(hsv.hue, cal.Hue);
             bitmap01->pixels[i][j] = diff < cal.MaxDiff ? 1 : 0;
         }
     }
