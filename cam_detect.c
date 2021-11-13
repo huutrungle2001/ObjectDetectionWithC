@@ -306,26 +306,24 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
 
 
 
-void writeThresholdImage(Bitmap01 *bitmap01, char *filename){
-    Bmp bmp;
-    bmp.height = bitmap01->h;
-    bmp.width = bitmap01->w;
+void writeThresholdImage(Bmp bmp, Bitmap01 *bitmap01, char *filename){
+    Bmp new_bmp = copy_bmp(bmp);
 
-    for(int i = 0; i < bmp.height; i++){
-        for(int j = 0; j < bmp.width; j++){
+    for(int i = 0; i < new_bmp.height; i++){
+        for(int j = 0; j < new_bmp.width; j++){
             if(bitmap01->pixels[i][j] == 1){
                 for(int k = 0; k < 3; k++){
-                    bmp.pixels[i][j][k] = 255;
+                    new_bmp.pixels[i][j][k] = 255;
                 }
             }else{
                 for(int k = 0; k < 3; k++){
-                    bmp.pixels[i][j][k] = 0;
+                    new_bmp.pixels[i][j][k] = 0;
                 }
             }
         }
     }
 
-    write_bmp(bmp, filename);
+    write_bmp(new_bmp, filename);
 }
 
 int main(int argc, char **argv)
