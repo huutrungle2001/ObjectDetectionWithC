@@ -339,8 +339,12 @@ int main(int argc, char **argv)
             for (int i = 0; i < nbCalibration; i++)
             {
                 generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
+
+                // them code export file black_white va co calibration_name
                 generate_regions(&bitmap01s[i]);
+
                 bounding_boxes(&bitmap01s[i]);
+                // them code ve cai box
             }
         }
     } // mode == "c" - calibration
