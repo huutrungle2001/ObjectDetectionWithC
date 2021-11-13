@@ -116,6 +116,8 @@ void displayCalibration()
         printCalibration(*(listCalibration + i));
 }
 
+HSV center[50][50];
+
 void CalibrateColorProfile(char *filename)
 {
     Bmp bmp = read_bmp(filename);
