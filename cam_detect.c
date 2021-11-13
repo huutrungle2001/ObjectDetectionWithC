@@ -278,7 +278,7 @@ void bounding_boxes(Bitmap01 *bitmap01)
         }
 }
 
-void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
+void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal, char *write_file)
 {
     // update bitmap01 from bmp and cal
     bitmap01->w = bmp->width;
@@ -286,15 +286,26 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     strcpy(bitmap01->calibration_code, cal.Objects);
 
     HSV hsv;
+    Bmp threshold;
+    threshold.height = bmp->height;
+    threshold.width = bmp->width;
     for (int i = 0; i < bmp->height; i++)
     {
         for (int j = 0; j < bmp->width; j++)
         {
             hsv = rgb2hsv(bmp->pixels[i][j]);
             int diff = hue_difference(hsv.hue, cal.Hue);
-            bitmap01->pixels[i][j] = diff < cal.MaxDiff ? 1 : 0;
+            if(diff <= cal.MaxDiff){
+                bitmap01->pixels[i][j] = 1;
+                threshold.pixels[i][j] = {255, 255, 255};
+            }else{
+                bitmap01->pixels[i][j] = 0;
+                threshold.pixels[i][j] = {0, 0, 0};
+            }
         }
     }
+
+    write_bmp(threshold, write_file);
 }
 
 int main(int argc, char **argv)
@@ -323,7 +334,8 @@ int main(int argc, char **argv)
         {
             // do something here
             Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
-            Bmp bmp; // them code doc bitmap vao day
+            char *bitmap_file = argv[3];
+            Bmp bmp = read_bmp(bitmap_file);
 
             for (int i = 0; i < nbCalibration; i++)
             {
