@@ -304,21 +304,27 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     }
 }
 
-
-
-void writeThresholdImage(Bitmap01 *bitmap01, char *filename){
+void writeThresholdImage(Bitmap01 *bitmap01, char *filename)
+{
     Bmp bmp;
     bmp.height = bitmap01->h;
     bmp.width = bitmap01->w;
 
-    for(int i = 0; i < bmp.height; i++){
-        for(int j = 0; j < bmp.width; j++){
-            if(bitmap01->pixels[i][j] == 1){
-                for(int k = 0; k < 3; k++){
+    for (int i = 0; i < bmp.height; i++)
+    {
+        for (int j = 0; j < bmp.width; j++)
+        {
+            if (bitmap01->pixels[i][j] == 1)
+            {
+                for (int k = 0; k < 3; k++)
+                {
                     bmp.pixels[i][j][k] = 255;
                 }
-            }else{
-                for(int k = 0; k < 3; k++){
+            }
+            else
+            {
+                for (int k = 0; k < 3; k++)
+                {
                     bmp.pixels[i][j][k] = 0;
                 }
             }
@@ -357,6 +363,8 @@ int main(int argc, char **argv)
             char *bitmap_file = argv[3];
             Bmp bmp = read_bmp(bitmap_file);
 
+            Bmp a_copy_bmp = copy_bmp(bmp);
+
             for (int i = 0; i < nbCalibration; i++)
             {
                 generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
@@ -366,7 +374,18 @@ int main(int argc, char **argv)
 
                 bounding_boxes(&bitmap01s[i]);
                 // them code ve cai box
+                for (int j = 0; j < bitmap01s[i].nbRegions; j++)
+                {
+                    if (large_enough(&bitmap01s[i].boundingBoxes[j]))
+                    {
+                        BoundingBox box = bitmap01s[i].boundingBoxes[j];
+
+                        draw_box(a_copy_bmp, box.min_x, box.min_y, box.max_x - box.min_x, box.max_y - box.max_y);
+                    }
+                }
             }
+
+            write_bmp(a_copy_bmp, "image_with_box.bmp");
         }
     } // mode == "c" - calibration
     else
