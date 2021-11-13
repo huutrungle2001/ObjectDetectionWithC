@@ -260,9 +260,9 @@ void bounding_boxes(Bitmap01 *bitmap01)
 
                 bitmap01->boundingBoxes[region - 1].max_y = get_max(bitmap01->boundingBoxes[region - 1].max_y, i);
 
-                bitmap01->boundingBoxes[region - 1].min_x = get_min(bitmap01->boundingBoxes[region - 1].max_x, j);
+                bitmap01->boundingBoxes[region - 1].min_x = get_min(bitmap01->boundingBoxes[region - 1].min_x, j);
 
-                bitmap01->boundingBoxes[region - 1].min_y = get_min(bitmap01->boundingBoxes[region - 1].max_y, i);
+                bitmap01->boundingBoxes[region - 1].min_y = get_min(bitmap01->boundingBoxes[region - 1].min_y, i);
             }
 
     for (int i = 0; i < bitmap01->nbRegions; i++)
