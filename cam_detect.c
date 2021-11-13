@@ -280,6 +280,11 @@ void bounding_boxes(Bitmap01 *bitmap01)
 
 void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
 {
+    // update bitmap01 from bmp and cal
+    bitmap01->w = bmp->width;
+    bitmap01->h = bmp->height;
+    strcpy(bitmap01->calibration_code, cal.Objects);
+
     HSV hsv;
     for (int i = 0; i < bmp->height; i++)
     {
@@ -323,6 +328,8 @@ int main(int argc, char **argv)
             for (int i = 0; i < nbCalibration; i++)
             {
                 generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
+                generate_regions(&bitmap01s[i]);
+                bounding_boxes(&bitmap01s[i]);
             }
         }
     } // mode == "c" - calibration
