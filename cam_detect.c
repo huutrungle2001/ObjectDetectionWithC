@@ -278,7 +278,7 @@ void bounding_boxes(Bitmap01 *bitmap01)
         }
 }
 
-void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal, char *write_file)
+void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
 {
     // update bitmap01 from bmp and cal
     bitmap01->w = bmp->width;
