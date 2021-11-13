@@ -26,10 +26,10 @@ bool checkInput(int argc, char **argv)
 {
 
     // something for debug
-    printf("*****************************\nNumber of argc: %d\n", argc);
-    for (int i = 0; i < argc; i++)
-        printf("%s ", argv[i]);
-    printf("\n***************************\n");
+    // printf("*****************************\nNumber of argc: %d\n", argc);
+    // for (int i = 0; i < argc; i++)
+    //     printf("%s ", argv[i]);
+    // printf("\n***************************\n");
 
     if (argc >= 5 || argc <= 1)
     {
@@ -118,28 +118,45 @@ void displayCalibration()
 
 HSV center[50][50];
 
-void CalibrateColorProfile(char *filename)
+#define MIN_SATURATION 50
+#define MIN_VALUE 30
+
+void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibration_file)
 {
-    Bmp bmp = read_bmp(filename);
+    Bmp bmp = read_bmp(bitmap_file);
     int midX = bmp.width / 2;
     int midY = bmp.height / 2;
+
+    int minHue = INT_MAX, maxHue = INT_MIN;
 
     for (int i = midY - 25, m = 0; i < midY + 25 && m < 50; i++, m++)
     {
         for (int j = midX - 25, n = 0; j < midX + 25 && n < 50; j++, n++)
         {
             center[m][n] = rgb2hsv(bmp.pixels[i][j]);
+
+            // update saturation and value meet the thresholds
+            if (center[m][n].saturation >= MIN_SATURATION && center[m][n].value >= MIN_VALUE)
+            {
+                minHue = (minHue > center[m][n].hue ? center[m][n].hue : minHue);
+                maxHue = (maxHue < center[m][n].hue ? center[m][n].hue : maxHue);
+            }
         }
     }
 
-    for (int i = 0; i < 50; i++)
-    {
-        for (int j = 0; j < 50; j++)
-        {
-            printf("(%d %d %d) ", center[i][j].hue, center[i][j].saturation, center[i][j].value);
-        }
-        printf("\n");
-    }
+    int middle_hue = hue_midpoint(minHue, maxHue);
+    int max_hue_difference = hue_difference(minHue, maxHue);
+
+    // for (int i = 0; i < 50; i++)
+    // {
+    //     for (int j = 0; j < 50; j++)
+    //     {
+    //         printf("(%d %d %d) ", center[i][j].hue, center[i][j].saturation, center[i][j].value);
+    //     }
+    //     printf("\n");
+    // }
+    // FILE *f = freopen(calibration_file, "a", stdout);
+    printf("%s %d %d %d %d\n", object_name, middle_hue, max_hue_difference, MIN_SATURATION, MIN_VALUE);
 }
 
 int main(int argc, char **argv)
@@ -174,6 +191,6 @@ int main(int argc, char **argv)
         char *calibrationBitMap = argv[3];
         char *calibrationCode = argv[2];
 
-        CalibrateColorProfile(calibrationBitMap);
+        CalibrateColorProfile(calibrationCode, calibrationBitMap, "test.txt");
     }
 }
