@@ -304,51 +304,46 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     }
 }
 
-<<<<<<< HEAD
-void writeThresholdImage(Bitmap01 *bitmap01, char *filename)
+void writeThresholdImage(Bmp bmp, Bitmap01 *bitmap01, char *filename)
 {
-    Bmp bmp;
-    bmp.height = bitmap01->h;
-    bmp.width = bitmap01->w;
+    Bmp new_bmp = copy_bmp(bmp);
 
-    for (int i = 0; i < bmp.height; i++)
+    for (int i = 0; i < new_bmp.height; i++)
     {
-        for (int j = 0; j < bmp.width; j++)
+        for (int j = 0; j < new_bmp.width; j++)
         {
             if (bitmap01->pixels[i][j] == 1)
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    bmp.pixels[i][j][k] = 255;
+                    new_bmp.pixels[i][j][k] = 255;
                 }
             }
             else
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    bmp.pixels[i][j][k] = 0;
-=======
-
-
-void writeThresholdImage(Bmp bmp, Bitmap01 *bitmap01, char *filename){
-    Bmp new_bmp = copy_bmp(bmp);
-
-    for(int i = 0; i < new_bmp.height; i++){
-        for(int j = 0; j < new_bmp.width; j++){
-            if(bitmap01->pixels[i][j] == 1){
-                for(int k = 0; k < 3; k++){
-                    new_bmp.pixels[i][j][k] = 255;
-                }
-            }else{
-                for(int k = 0; k < 3; k++){
                     new_bmp.pixels[i][j][k] = 0;
->>>>>>> e8c9d7ed642f41de5b7dbb537555f322e6f408a7
                 }
             }
         }
     }
 
     write_bmp(new_bmp, filename);
+}
+
+void draw_boxes(Bmp bmp, Bitmap01 bitmap01)
+{
+    // them code ve cai box
+    for (int j = 0; j < bitmap01.nbRegions; j++)
+    {
+        if (large_enough(&bitmap01.boundingBoxes[j]))
+        {
+            BoundingBox box = bitmap01.boundingBoxes[j];
+
+            draw_box(bmp, box.min_x, box.min_y, box.max_x - box.min_x, box.max_y - box.max_y);
+        }
+    }
 }
 
 int main(int argc, char **argv)
@@ -378,6 +373,7 @@ int main(int argc, char **argv)
             // do something here
             Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
             char *bitmap_file = argv[3];
+
             Bmp bmp = read_bmp(bitmap_file);
 
             Bmp a_copy_bmp = copy_bmp(bmp);
@@ -390,16 +386,8 @@ int main(int argc, char **argv)
                 generate_regions(&bitmap01s[i]);
 
                 bounding_boxes(&bitmap01s[i]);
-                // them code ve cai box
-                for (int j = 0; j < bitmap01s[i].nbRegions; j++)
-                {
-                    if (large_enough(&bitmap01s[i].boundingBoxes[j]))
-                    {
-                        BoundingBox box = bitmap01s[i].boundingBoxes[j];
 
-                        draw_box(a_copy_bmp, box.min_x, box.min_y, box.max_x - box.min_x, box.max_y - box.max_y);
-                    }
-                }
+                draw_boxes(a_copy_bmp, bitmap01s[i]);
             }
 
             write_bmp(a_copy_bmp, "image_with_box.bmp");
