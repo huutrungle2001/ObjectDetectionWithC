@@ -278,29 +278,18 @@ void bounding_boxes(Bitmap01 *bitmap01)
         }
 }
 
-void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal, char *write_file)
+void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
 {
     HSV hsv;
-    Bmp threshold;
-    threshold.height = bmp->height;
-    threshold.width = bmp->width;
     for (int i = 0; i < bmp->height; i++)
     {
         for (int j = 0; j < bmp->width; j++)
         {
             hsv = rgb2hsv(bmp->pixels[i][j]);
             int diff = hue_difference(hsv.hue, cal.Hue);
-            if(diff <= cal.MaxDiff){
-                bitmap01->pixels[i][j] = 1;
-                threshold.pixels[i][j] = {255, 255, 255};
-            }else{
-                bitmap01->pixels[i][j] = 0;
-                threshold.pixels[i][j] = {0, 0, 0};
-            }
+            bitmap01->pixels[i][j] = diff < cal.MaxDiff ? 1 : 0;
         }
     }
-
-    write_bmp(threshold, write_file);
 }
 
 int main(int argc, char **argv)
