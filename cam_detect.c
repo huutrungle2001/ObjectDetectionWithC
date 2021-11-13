@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "bitmap.c"
 
 typedef struct{
@@ -7,51 +8,80 @@ typedef struct{
     int Hue, MaxDiff, MinSat, MinVal;
 } Calibration;
 
+bool checkInput(int argc, char *mode, char *filename){
+    if (argc > 3){
+        printf("Incorrect input.\n");
+        return false;
+    }
+ 
+    if (strlen(mode) > 1){
+        printf("Incorrect input.\n");
+        return false;
+    }
+ 
+    if (mode[0] != 'c' && mode[0] != 's' && mode[0] != 'd'){
+        printf("Incorrect input.\n");
+        return false;
+    }
+
+    // Check valid file.
+    if (freopen(filename, "r", stdin) == NULL){
+        printf("Could not open calibration file.\n");
+        return false;
+    }
+ 
+    return true;
+}
+
 void readCalibration(Calibration *cal){
     scanf("%s", cal->Objects);
     scanf("%d%d%d%d", &cal->Hue, &cal->MaxDiff, &cal->MinSat, &cal->MinVal);
 }
 
-void printCalibration(Calibration cal){
+void printCalibration(Calibration *cal){
     // Check read successful
-    if(cal.Hue == -1){
+    if(cal->Hue == -1){
         return;
     }
-    printf("%s: Hue: %d (Max. Diff %d), Min. SV: %d %d\n", cal.Objects, cal.Hue, cal.MaxDiff, cal.MinSat, cal.MinVal);
+    printf("%s: Hue: %d (Max. Diff %d), Min. SV: %d %d\n", cal->Objects, cal->Hue, cal->MaxDiff, cal->MinSat, cal->MinVal);
 }
 
-void ShowCalibration(int argc, char* filename){
-    // Check argument count.
-        if(argc > 3){
-            printf("Incorrect input.\n");
-            return;
-        }
-        
-        // Open file to read
-        FILE *file = freopen(filename, "r", stdin);
+void ShowCalibration(int argc, char *mode, char *filename){
+    // Check input
+    checkInput(argc, mode, filename);    
+    
+    // Open file to read
+    FILE *file = freopen(filename, "r", stdin);
 
-        // Check valid file.
-        if(file == NULL){
-            printf("Could not open calibration file.\n");
-            return;
-        }
+    printf("Calibrated objects:\n");
 
-        printf("Calibrated objects:\n");
+    // Declare a list of Calibration variable to hold the Calibration data.
+    Calibration *listCal;
+    
+    int calIndex = 0;
+    listCal = malloc(sizeof(Calibration));
 
-        // Declare a Calibration variable to hold the Calibration data.
-        Calibration cal;
+    // Read until end of file.
+    while(!feof(file)){
+        // Read calibration i
+        readCalibration(listCal + calIndex);
 
-        // Read and print until end of file.
-        while(!feof(file)){
-            readCalibration(&cal);
-            printCalibration(cal);
+        // Move to the next calibration
+        calIndex++;
 
-            // Reset the Calibration variable.
-            cal.Hue = -1;
-        }
-        
-        fclose(file);
-        free(file);
+        // Make room for another calibration
+        listCal = realloc(listCal, (calIndex + 1)*sizeof(Calibration));
+
+        // Reset the Calibration variable.
+        (listCal + calIndex)->Hue = -1;
+    }
+
+    for(int i = 0; i < calIndex; i++) {
+        printCalibration(listCal + i);
+    }
+    
+    fclose(file);
+    free(file);
 }
 
 int main(int argc, char **argv){
@@ -62,7 +92,7 @@ int main(int argc, char **argv){
     if(strcmp(mode, "s") == 0){
         // Get calibration file path from argument vector.
         char *calibrationFilepath = argv[2];
-        ShowCalibration(argc, calibrationFilepath);
+        ShowCalibration(argc, mode, calibrationFilepath);
     }else if(strcmp(mode, "d") == 0){
 
     }else if(strcmp(mode, "c") == 0){
