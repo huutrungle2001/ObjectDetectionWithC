@@ -14,10 +14,18 @@ HSV center[50][50];
 
 typedef struct
 {
+    int min_x, max_x, min_y, max_y;
+} BoundingBox;
+
+typedef struct
+{
+    char calibration_code[255];
     int w, h;
     int **pixels;
     int **regions;
     int nbRegions;
+    BoundingBox *boundingBoxes;
+
 } Bitmap01;
 
 void printCalibration(Calibration cal)
@@ -215,6 +223,51 @@ void generate_regions(Bitmap01 *bitmap01)
                 dfs(i, j, bitmap01);
             }
 }
+
+bool large_enough(BoundingBox *boundingBox)
+{
+    return (boundingBox->max_x - boundingBox->min_x >= 19) && (boundingBox->max_y - boundingBox->min_y >= 19);
+}
+
+void bounding_boxes(Bitmap01 *bitmap01)
+{
+    bitmap01->boundingBoxes = malloc(bitmap01->nbRegions * sizeof(BoundingBox));
+
+    // initialize bounding boxes
+    for (int i = 0; i < bitmap01->nbRegions; i++)
+    {
+        bitmap01->boundingBoxes[i].max_x = bitmap01->boundingBoxes[i].max_y = INT_MIN;
+        bitmap01->boundingBoxes[i].min_x = bitmap01->boundingBoxes[i].min_y = INT_MAX;
+    }
+
+    // update bounding boxes
+    int region;
+    for (int i = 0; i < bitmap01->h; i++)
+        for (int j = 0; j < bitmap01->w; j++)
+            if (region = bitmap01->regions[i][j])
+            {
+                bitmap01->boundingBoxes[region - 1].max_x = (bitmap01->boundingBoxes[region - 1].max_x < j) ? j : bitmap01->boundingBoxes[region - 1].max_x;
+
+                bitmap01->boundingBoxes[region - 1].max_y = (bitmap01->boundingBoxes[region - 1].max_y < i) ? i : bitmap01->boundingBoxes[region - 1].max_y;
+
+                bitmap01->boundingBoxes[region - 1].min_x = (bitmap01->boundingBoxes[region - 1].min_x > j) ? j : bitmap01->boundingBoxes[region - 1].min_x;
+
+                bitmap01->boundingBoxes[region - 1].min_y = (bitmap01->boundingBoxes[region - 1].min_x > i) ? i : bitmap01->boundingBoxes[region - 1].min_y;
+            }
+
+    for (int i = 0; i < bitmap01->nbRegions; i++)
+        if (large_enough(&bitmap01->boundingBoxes[i]))
+        {
+            int x = bitmap01->boundingBoxes[i].min_x;
+            int y = bitmap01->boundingBoxes[i].min_y;
+            int w = bitmap01->boundingBoxes[i].max_x - bitmap01->boundingBoxes[i].min_x;
+            int h = bitmap01->boundingBoxes[i].max_y - bitmap01->boundingBoxes[i].min_y;
+            char *object_name = bitmap01->calibration_code;
+
+            printf("Detected %s: %d %d %d %d\n", object_name, x, y, w, h);
+        }
+}
+
 int main(int argc, char **argv)
 {
     if (checkInput(argc, argv) == false)
