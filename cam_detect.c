@@ -292,9 +292,6 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
         {
             hsv = rgb2hsv(bmp->pixels[i][j]);
             int diff = hue_difference(hsv.hue, cal.Hue);
-<<<<<<< HEAD
-            bitmap01->pixels[i][j] = diff < cal.MaxDiff ? 1 : 0;
-=======
             if (diff <= cal.MaxDiff)
             {
                 bitmap01->pixels[i][j] = 1;
@@ -303,9 +300,32 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
             {
                 bitmap01->pixels[i][j] = 0;
             }
->>>>>>> ce4b6208178607263c9b82e95e13f4a59e574370
         }
     }
+}
+
+
+
+void writeThresholdImage(Bitmap01 *bitmap01, char *filename){
+    Bmp bmp;
+    bmp.height = bitmap01->h;
+    bmp.width = bitmap01->w;
+
+    for(int i = 0; i < bmp.height; i++){
+        for(int j = 0; j < bmp.width; j++){
+            if(bitmap01->pixels[i][j] == 1){
+                for(int k = 0; k < 3; k++){
+                    bmp.pixels[i][j][k] = 255;
+                }
+            }else{
+                for(int k = 0; k < 3; k++){
+                    bmp.pixels[i][j][k] = 0;
+                }
+            }
+        }
+    }
+
+    write_bmp(bmp, filename);
 }
 
 int main(int argc, char **argv)
