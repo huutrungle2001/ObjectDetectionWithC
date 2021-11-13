@@ -14,10 +14,15 @@ HSV center[50][50];
 
 typedef struct
 {
+<<<<<<< HEAD
     int w, h;
     int **pixels;
     int **regions;
     int nbRegions;
+=======
+    int h, w;
+    int **pixel;
+>>>>>>> 3cbf3be914c530a89e809bf6d534a8043c523ded
 } Bitmap01;
 
 void printCalibration(Calibration cal)
@@ -169,6 +174,7 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
     printf("%s %d %d %d %d\n", object_name, middle_hue, max_hue_difference, MIN_SATURATION, MIN_VALUE);
 }
 
+<<<<<<< HEAD
 int dx[] = {-1, 0, 1, 0};
 int dy[] = {0, -1, 0, 1};
 
@@ -215,6 +221,25 @@ void generate_regions(Bitmap01 *bitmap01)
                 dfs(i, j, bitmap01);
             }
 }
+=======
+void ObjectDetection(char *calibration_file, char *image_file){
+    Bmp bmp = read_bmp(image_file);
+
+    Bitmap01 bm;
+    bm.h = bmp.height;
+    bm.w = bmp.width;
+
+    // Allocate colums
+    bm.pixel = malloc(bm.h * sizeof(int *));
+    for(int i = 0; i < bm.height; i++) {
+        // Allocate rows
+        bm.pixel[i] = malloc(bm.w * sizeof(int));
+    }
+    
+    
+}
+
+>>>>>>> 3cbf3be914c530a89e809bf6d534a8043c523ded
 int main(int argc, char **argv)
 {
     if (checkInput(argc, argv) == false)
