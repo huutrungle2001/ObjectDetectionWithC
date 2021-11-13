@@ -318,7 +318,8 @@ int main(int argc, char **argv)
         {
             // do something here
             Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
-            Bmp bmp; // them code doc bitmap vao day
+            char *bitmap_file = argv[3];
+            Bmp bmp = read_bmp(bitmap_file);
 
             for (int i = 0; i < nbCalibration; i++)
             {
