@@ -28,6 +28,16 @@ typedef struct
 
 } Bitmap01;
 
+int get_min(int a, int b)
+{
+    return (a < b) ? a : b;
+}
+
+int get_max(int a, int b)
+{
+    return (a > b) ? a : b;
+}
+
 void printCalibration(Calibration cal)
 {
     // Check read successful
@@ -137,23 +147,13 @@ HSV center[50][50];
 #define MIN_SATURATION 50
 #define MIN_VALUE 30
 
-inline get_min(int a, int b)
-{
-    return (a < b) ? a : b;
-}
-
-inline get_max(int a, int b)
-{
-    return (a > b) ? a : b;
-}
-
-void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibration_file)
+void calibrate_color_profile(char *object_name, char *bitmap_file, char *calibration_file)
 {
     Bmp bmp = read_bmp(bitmap_file);
     int midX = bmp.width / 2;
     int midY = bmp.height / 2;
     //(50,50) => 25,25
-    int minHue = INT_MAX, maxHue = INT_MIN;
+    int min_hue = INT_MAX, max_hue = INT_MIN;
 
     for (int i = midY - 25, m = 0; i < midY + 25 && m < 50; i++, m++)
     {
@@ -164,15 +164,15 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
             // update saturation and value meet the thresholds
             if (center[m][n].saturation >= MIN_SATURATION && center[m][n].value >= MIN_VALUE)
             {
-                minHue = get_min(minHue, center[m][n].hue);
-                maxHue = get_max(minHue, center[m][n].hue);
+                min_hue = get_min(min_hue, center[m][n].hue);
+                max_hue = get_max(max_hue, center[m][n].hue);
             }
         }
     }
 
-    printf("%d %d\n", minHue, maxHue);
-    int middle_hue = hue_midpoint(minHue, maxHue);
-    int max_hue_difference = hue_difference(minHue, maxHue);
+    // printf("%d %d\n", minHue, maxHue);
+    int middle_hue = hue_midpoint(min_hue, max_hue);
+    int max_hue_difference = hue_difference(min_hue, max_hue);
 
     // for (int i = 0; i < 50; i++)
     // {
@@ -304,32 +304,19 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     }
 }
 
-void writeThresholdImage(Bmp bmp, Bitmap01 *bitmap01, char *filename)
+void write_threshold_image(Bmp bmp, Bitmap01 *bitmap01)
 {
-    Bmp new_bmp = copy_bmp(bmp);
-
-    for (int i = 0; i < new_bmp.height; i++)
+    for (int i = 0; i < bmp.height; i++)
     {
-        for (int j = 0; j < new_bmp.width; j++)
+        for (int j = 0; j < bmp.width; j++)
         {
-            if (bitmap01->pixels[i][j] == 1)
-            {
-                for (int k = 0; k < 3; k++)
-                {
-                    new_bmp.pixels[i][j][k] = 255;
-                }
-            }
-            else
-            {
-                for (int k = 0; k < 3; k++)
-                {
-                    new_bmp.pixels[i][j][k] = 0;
-                }
-            }
+            for (int k = 0; k < 3; k++)
+                if (bitmap01->pixels[i][j] == 1)
+                    bmp.pixels[i][j][k] = 255;
+                else
+                    bmp.pixels[i][j][k] = 0;
         }
     }
-
-    write_bmp(new_bmp, filename);
 }
 
 void draw_boxes(Bmp bmp, Bitmap01 bitmap01)
@@ -376,7 +363,8 @@ int main(int argc, char **argv)
 
             Bmp bmp = read_bmp(bitmap_file);
 
-            Bmp a_copy_bmp = copy_bmp(bmp);
+            Bmp bmp_with_boxes = copy_bmp(bmp);
+            Bmp bmp_with_threshold = copy_bmp(bmp);
 
             for (int i = 0; i < nbCalibration; i++)
             {
@@ -387,10 +375,11 @@ int main(int argc, char **argv)
 
                 bounding_boxes(&bitmap01s[i]);
 
-                draw_boxes(a_copy_bmp, bitmap01s[i]);
+                write_threshold_image(bmp_with_threshold, &bitmap01s[i]);
+                draw_boxes(bmp_with_boxes, bitmap01s[i]);
             }
 
-            write_bmp(a_copy_bmp, "image_with_box.bmp");
+            write_bmp(bmp_with_boxes, "image_with_box.bmp");
         }
     } // mode == "c" - calibration
     else
@@ -398,6 +387,6 @@ int main(int argc, char **argv)
         char *calibrationCode = argv[2];
         char *calibrationBitMap = argv[3];
 
-        CalibrateColorProfile(calibrationCode, calibrationBitMap, "test.txt");
+        calibrate_color_profile(calibrationCode, calibrationBitMap, "test.txt");
     }
 }
