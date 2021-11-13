@@ -12,6 +12,12 @@ Calibration *listCalibration;
 int nbCalibration;
 HSV center[50][50];
 
+typedef struct
+{
+    int m, n;
+    int **pixel;
+} Bitmap01;
+
 void printCalibration(Calibration cal)
 {
     // Check read successful
@@ -126,7 +132,7 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
     Bmp bmp = read_bmp(bitmap_file);
     int midX = bmp.width / 2;
     int midY = bmp.height / 2;
-
+    //(50,50) => 25,25
     int minHue = INT_MAX, maxHue = INT_MIN;
 
     for (int i = midY - 25, m = 0; i < midY + 25 && m < 50; i++, m++)
@@ -144,6 +150,7 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
         }
     }
 
+    printf("%d %d\n", minHue, maxHue);
     int middle_hue = hue_midpoint(minHue, maxHue);
     int max_hue_difference = hue_difference(minHue, maxHue);
 
@@ -156,6 +163,7 @@ void CalibrateColorProfile(char *object_name, char *bitmap_file, char *calibrati
     //     printf("\n");
     // }
     // FILE *f = freopen(calibration_file, "a", stdout);
+
     printf("%s %d %d %d %d\n", object_name, middle_hue, max_hue_difference, MIN_SATURATION, MIN_VALUE);
 }
 
@@ -188,8 +196,8 @@ int main(int argc, char **argv)
     } // mode == "c" - calibration
     else
     {
-        char *calibrationBitMap = argv[3];
         char *calibrationCode = argv[2];
+        char *calibrationBitMap = argv[3];
 
         CalibrateColorProfile(calibrationCode, calibrationBitMap, "test.txt");
     }
