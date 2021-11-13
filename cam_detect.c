@@ -295,17 +295,16 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal, char *wr
         {
             hsv = rgb2hsv(bmp->pixels[i][j]);
             int diff = hue_difference(hsv.hue, cal.Hue);
-            if(diff <= cal.MaxDiff){
+            if (diff <= cal.MaxDiff)
+            {
                 bitmap01->pixels[i][j] = 1;
-                threshold.pixels[i][j] = {255, 255, 255};
-            }else{
+            }
+            else
+            {
                 bitmap01->pixels[i][j] = 0;
-                threshold.pixels[i][j] = {0, 0, 0};
             }
         }
     }
-
-    write_bmp(threshold, write_file);
 }
 
 int main(int argc, char **argv)
