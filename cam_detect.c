@@ -115,12 +115,12 @@ void displayCalibration()
         printCalibration(*(listCalibration + i));
 }
 
+HSV center[50][50];
 void CalibrateColorProfile(char *filename){
     Bmp bmp = read_bmp(filename);
     int midX = bmp.width/2;
     int midY = bmp.height/2;
-
-    HSV center[50][50];
+    
     for(int i = midY - 25, m = 0; i < midY + 25 && m < 50; i++, m++) {
         for(int j = midX - 25, n = 0; j < midX + 25 && n < 50; j++, n++) {
             center[m][n] = rgb2hsv(bmp.pixels[i][j]);
