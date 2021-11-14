@@ -118,7 +118,7 @@ Calibration *read_calibration(char *calibrationFile, int *nbCalibration)
     // Open file to read
     FILE *file = freopen(calibrationFile, "r", stdin);
 
-    printf("Calibrated Objects:\n");
+    // printf("Calibrated Objects:\n");
 
     // Declare a list of Calibration variable to hold the Calibration data.
     Calibration *listCal = malloc(10 * sizeof(Calibration));
@@ -162,7 +162,7 @@ Calibration *read_calibration_with_function(char *calibrationFile, int *nbCalibr
     // Open file to read
     FILE *file = fopen(calibrationFile, "r");
 
-    printf("Calibrated Objects:\n");
+    // printf("Calibrated Objects:\n");
 
     // Declare a list of Calibration variable to hold the Calibration data.
     Calibration *listCal = malloc(10 * sizeof(Calibration));
@@ -251,51 +251,61 @@ void calibrate_color_profile(char *object_name, char *bitmap_file, char *calibra
     printf("%s %d %d %d %d\n", object_name, middle_hue, max_hue_difference, MIN_SATURATION, MIN_VALUE);
 }
 
-int dx[] = {-1, 0, 1, 0};
-int dy[] = {0, -1, 0, 1};
+int dx[] = {1, -1, 0, 0};
+int dy[] = {0, 0, 1, -1};
 
 void dfs(int i, int j, Bitmap01 *bitmap01)
 {
+    // printf("%d %d %d\n", bitmap01->nbRegions, i, j);
     bitmap01->regions[i][j] = bitmap01->nbRegions;
     for (int h = 0; h < 4; h++)
     {
         int x = i + dx[h], y = j + dy[h];
-        if (x >= 0 && x < bitmap01->w && y >= 0 && y < bitmap01->h)
-        {
-            dfs(x, y, bitmap01);
-        }
+        if (x >= 0 && x < bitmap01->h && y >= 0 && y < bitmap01->w)
+            if (bitmap01->regions[x][y] == 0 && bitmap01->pixels[i][j] == 1)
+            {
+                dfs(x, y, bitmap01);
+            }
     }
 }
 
 void generate_regions(Bitmap01 *bitmap01)
 {
-    int **mark = bitmap01->regions;
 
-    mark = malloc(bitmap01->h * sizeof(int *));
-    if (mark == NULL)
+    bitmap01->regions = malloc(bitmap01->h * sizeof(int *));
+    if (bitmap01->regions == NULL)
     {
-        fprintf(stderr, "out of memory\n");
+        fprintf(stderr, "out of memory 1\n");
         exit(0);
     }
-    for (int i = 0; i < bitmap01->w; i++)
+    for (int i = 0; i < bitmap01->h; i++)
     {
-        mark[i] = malloc(bitmap01->w * sizeof(int));
-        if (mark[i] == NULL)
+        bitmap01->regions[i] = malloc(bitmap01->w * sizeof(int));
+        if (bitmap01->regions[i] == NULL)
         {
-            fprintf(stderr, "out of memory\n");
+            fprintf(stderr, "out of memory 2\n");
             exit(0);
         }
     }
 
-    memset(bitmap01->regions, 0, sizeof(int) * bitmap01->h * bitmap01->w);
+    bitmap01->nbRegions = 0;
+    for (int i = 0; i < bitmap01->h; i++)
+        for (int j = 0; j < bitmap01->w; j++)
+            bitmap01->regions[i][j] = 0;
 
     for (int i = 0; i < bitmap01->h; i++)
         for (int j = 0; j < bitmap01->w; j++)
+        {
+            // se loi neu lenh nay thuc thi
+            // printf("%d %d %d\n", i, j, bitmap01->regions[i][j]);
+
             if (bitmap01->pixels[i][j] == 1 && bitmap01->regions[i][j] == 0)
             {
+                // printf("Region %d %d %d:\n", bitmap01->nbRegions, i, j);
                 bitmap01->nbRegions++;
                 dfs(i, j, bitmap01);
             }
+        }
 }
 
 bool large_enough(BoundingBox *boundingBox)
@@ -307,6 +317,9 @@ void bounding_boxes(Bitmap01 *bitmap01)
 {
     bitmap01->boundingBoxes = malloc(bitmap01->nbRegions * sizeof(BoundingBox));
 
+    // printf("Number of regions: %d\n", bitmap01->nbRegions);
+    // printf("we are in bounding boxes 1\n");
+
     // initialize bounding boxes
     for (int i = 0; i < bitmap01->nbRegions; i++)
     {
@@ -314,13 +327,16 @@ void bounding_boxes(Bitmap01 *bitmap01)
         bitmap01->boundingBoxes[i].min_x = bitmap01->boundingBoxes[i].min_y = MY_INT_MAX;
     }
 
+    // printf("we are in bounding boxes 2\n");
     // update bounding boxes
-    int region;
     for (int i = 0; i < bitmap01->h; i++)
         for (int j = 0; j < bitmap01->w; j++)
+        {
+
             if (bitmap01->regions[i][j])
             {
-                region = bitmap01->regions[i][j];
+
+                int region = bitmap01->regions[i][j];
 
                 bitmap01->boundingBoxes[region - 1].max_x = get_max(bitmap01->boundingBoxes[region - 1].max_x, j);
 
@@ -330,6 +346,9 @@ void bounding_boxes(Bitmap01 *bitmap01)
 
                 bitmap01->boundingBoxes[region - 1].min_y = get_min(bitmap01->boundingBoxes[region - 1].min_y, i);
             }
+        }
+
+    // printf("we are in bounding boxes 3\n");
 
     for (int i = 0; i < bitmap01->nbRegions; i++)
         if (large_enough(&bitmap01->boundingBoxes[i]))
@@ -340,7 +359,7 @@ void bounding_boxes(Bitmap01 *bitmap01)
             int h = bitmap01->boundingBoxes[i].max_y - bitmap01->boundingBoxes[i].min_y;
             char *object_name = bitmap01->calibration_code;
 
-            printf("Detected %s: %d %d %d %d\n", object_name, x, y, w, h);
+            printf("Detected %s: %d %d %d %d\n", object_name, x + 1, y + 1, w - 1, h - 1);
         }
 }
 
@@ -349,6 +368,24 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     // update bitmap01 from bmp and cal
     bitmap01->w = bmp->width;
     bitmap01->h = bmp->height;
+
+    bitmap01->pixels = malloc(bitmap01->h * sizeof(int *));
+    if (bitmap01->pixels == NULL)
+    {
+        fprintf(stderr, "out of memory 1\n");
+        exit(0);
+    }
+    for (int i = 0; i < bitmap01->h; i++)
+    {
+        bitmap01->pixels[i] = malloc(bitmap01->w * sizeof(int));
+        if (bitmap01->pixels[i] == NULL)
+        {
+            fprintf(stderr, "out of memory 2\n");
+            exit(0);
+        }
+    }
+
+    // bitmap01->pixels = malloc(bitmap01->w * bitmap01->h * sizeof(int));
     strcpy(bitmap01->calibration_code, cal.Objects);
 
     HSV hsv;
@@ -370,17 +407,17 @@ void generate_blackwhite(Bmp *bmp, Bitmap01 *bitmap01, Calibration cal)
     }
 }
 
-void write_threshold_image(Bmp bmp, Bitmap01 *bitmap01)
+void write_threshold_image(Bmp *bmp, Bitmap01 *bitmap01)
 {
-    for (int i = 0; i < bmp.height; i++)
+    for (int i = 0; i < bmp->height; i++)
     {
-        for (int j = 0; j < bmp.width; j++)
+        for (int j = 0; j < bmp->width; j++)
         {
             for (int k = 0; k < 3; k++)
                 if (bitmap01->pixels[i][j] == 1)
-                    bmp.pixels[i][j][k] = 255;
+                    bmp->pixels[i][j][k] = 255;
                 else
-                    bmp.pixels[i][j][k] = 0;
+                    bmp->pixels[i][j][k] = 0;
         }
     }
 }
@@ -421,52 +458,37 @@ int main(int argc, char **argv)
 
         if (strcmp(mode, "s") == 0)
         {
+
+            printf("Calibrated Objects:\n");
+
             displayCalibration();
             return 0;
         }
         else // mode == "d" - detect object
         {
-            // printf("We are here\n");
-            displayCalibration();
+            // displayCalibration();
 
-            // return 0;
-            // do something here
-            Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
             char *bitmap_file = argv[3];
 
             Bmp bmp = read_bmp(bitmap_file);
 
+            Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
+
             Bmp bmp_with_boxes = copy_bmp(bmp);
             Bmp bmp_with_threshold = copy_bmp(bmp);
 
+            // printf("Size: %d %d\n", bmp.height, bmp.width);
             for (int i = 0; i < nbCalibration; i++)
             {
-                printf("we are here 0\n");
 
                 generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
-                printf("we are here 1\n");
 
-                write_threshold_image(bmp, &bitmap01s[i]);
-                printf("we are here 2\n");
+                write_threshold_image(&bmp_with_threshold, &bitmap01s[i]);
 
-                // them code export file black_white va co calibration_name
                 generate_regions(&bitmap01s[i]);
-                printf("we are here 3\n");
 
                 bounding_boxes(&bitmap01s[i]);
-                printf("we are here 4\n");
-
-                write_threshold_image(bmp_with_threshold, &bitmap01s[i]);
-                printf("we are here 5 \n");
-
-                draw_boxes(bmp_with_boxes, bitmap01s[i]);
-                printf("we are here 6\n");
             }
-
-            printf("we are here\n");
-            write_bmp(bmp_with_threshold, "image_with_threshold.bmp");
-
-            write_bmp(bmp_with_boxes, "image_with_box.bmp");
         }
     } // mode == "c" - calibration
     else
