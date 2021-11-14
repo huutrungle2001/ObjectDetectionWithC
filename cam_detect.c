@@ -441,20 +441,29 @@ int main(int argc, char **argv)
 
             for (int i = 0; i < nbCalibration; i++)
             {
+                printf("we are here 0\n");
+
                 generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
+                printf("we are here 1\n");
 
                 write_threshold_image(bmp, &bitmap01s[i]);
+                printf("we are here 2\n");
 
                 // them code export file black_white va co calibration_name
                 generate_regions(&bitmap01s[i]);
+                printf("we are here 3\n");
 
                 bounding_boxes(&bitmap01s[i]);
+                printf("we are here 4\n");
 
                 write_threshold_image(bmp_with_threshold, &bitmap01s[i]);
+                printf("we are here 5 \n");
 
                 draw_boxes(bmp_with_boxes, bitmap01s[i]);
+                printf("we are here 6\n");
             }
 
+            printf("we are here\n");
             write_bmp(bmp_with_threshold, "image_with_threshold.bmp");
 
             write_bmp(bmp_with_boxes, "image_with_box.bmp");
