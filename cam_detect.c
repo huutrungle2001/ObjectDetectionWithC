@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "bitmap.c"
+#include <stdlib.h>
+
+#define MY_INT_MAX 1000000000
+#define MY_INT_MIN -1000000000
 
 typedef struct
 {
@@ -10,7 +15,6 @@ typedef struct
 
 Calibration *listCalibration;
 int nbCalibration;
-HSV center[50][50];
 
 typedef struct
 {
@@ -38,17 +42,17 @@ int get_max(int a, int b)
     return (a > b) ? a : b;
 }
 
-void printCalibration(Calibration cal)
+void print_calibration(Calibration cal)
 {
     // Check read successful
     if (cal.Hue == -1)
     {
         return;
     }
-    printf("%s: Hue: %d (Max. Diff %d), Min. SV: %d %d\n", cal.Objects, cal.Hue, cal.MaxDiff, cal.MinSat, cal.MinVal);
+    printf("%s: Hue: %d (Max. Diff: %d), Min. SV: %d %d\n", cal.Objects, cal.Hue, cal.MaxDiff, cal.MinSat, cal.MinVal);
 }
 
-bool checkInput(int argc, char **argv)
+bool check_input(int argc, char **argv)
 {
 
     // something for debug
@@ -59,14 +63,14 @@ bool checkInput(int argc, char **argv)
 
     if (argc >= 5 || argc <= 1)
     {
-        printf("Incorrect input.\n");
+        printf("Incorrect input\n");
         return false;
     }
 
     char *mode = argv[1];
     if (strlen(mode) > 1 || (mode[0] != 'c' && mode[0] != 's' && mode[0] != 'd'))
     {
-        printf("Incorrect input.\n");
+        printf("Incorrect input\n");
         return false;
     }
 
@@ -93,31 +97,44 @@ bool checkInput(int argc, char **argv)
 void readASingleCalibration(Calibration *cal)
 {
     scanf("%s", cal->Objects);
+
+    // printf("%s\n", cal->Objects);
+
     scanf("%d%d%d%d", &cal->Hue, &cal->MaxDiff, &cal->MinSat, &cal->MinVal);
 }
 
-Calibration *readCalibration(char *calibrationFile, int *nbCalibration)
+void readASingleCalibrationwithFile(FILE *f, Calibration *cal)
+{
+    fscanf(f, "%s", cal->Objects);
+
+    // printf("%s\n", cal->Objects);
+
+    fscanf(f, "%d%d%d%d", &cal->Hue, &cal->MaxDiff, &cal->MinSat, &cal->MinVal);
+}
+
+Calibration *read_calibration(char *calibrationFile, int *nbCalibration)
 {
 
     // Open file to read
     FILE *file = freopen(calibrationFile, "r", stdin);
 
-    printf("Calibrated objects:\n");
+    printf("Calibrated Objects:\n");
 
     // Declare a list of Calibration variable to hold the Calibration data.
-    Calibration *listCal = malloc(sizeof(Calibration));
+    Calibration *listCal = malloc(10 * sizeof(Calibration));
     Calibration aCalibration;
 
     *nbCalibration = 0;
     aCalibration.Hue = -1;
 
     // Read until end of file.
+
     while (!feof(file))
     {
         // Read a new calibration
         readASingleCalibration(&aCalibration);
 
-        // printCalibration(aCalibration);
+        print_calibration(aCalibration);
 
         // if reading is not ok
         if (aCalibration.Hue == -1)
@@ -128,18 +145,65 @@ Calibration *readCalibration(char *calibrationFile, int *nbCalibration)
         (*nbCalibration)++;
 
         // // Make room for another calibration
-        listCal = realloc(listCal, (*nbCalibration + 1) * sizeof(Calibration));
+        // listCal = realloc(listCal, (*nbCalibration + 1) * sizeof(Calibration));
 
         // Reset the Calibration variable.
         aCalibration.Hue = -1;
     }
+
+    fclose(file);
+
+    return listCal;
+}
+
+Calibration *read_calibration_with_function(char *calibrationFile, int *nbCalibration)
+{
+
+    // Open file to read
+    FILE *file = fopen(calibrationFile, "r");
+
+    printf("Calibrated Objects:\n");
+
+    // Declare a list of Calibration variable to hold the Calibration data.
+    Calibration *listCal = malloc(10 * sizeof(Calibration));
+    Calibration aCalibration;
+
+    *nbCalibration = 0;
+    aCalibration.Hue = -1;
+
+    // Read until end of file.
+
+    while (!feof(file))
+    {
+        // Read a new calibration
+        readASingleCalibrationwithFile(file, &aCalibration);
+
+        // print_calibration(aCalibration);
+
+        // if reading is not ok
+        if (aCalibration.Hue == -1)
+            break;
+
+        // Move to the next calibration
+        *(listCal + *nbCalibration) = aCalibration;
+        (*nbCalibration)++;
+
+        // // Make room for another calibration
+        // listCal = realloc(listCal, (*nbCalibration + 1) * sizeof(Calibration));
+
+        // Reset the Calibration variable.
+        aCalibration.Hue = -1;
+    }
+
+    fclose(file);
+
     return listCal;
 }
 
 void displayCalibration()
 {
     for (int i = 0; i < nbCalibration; i++)
-        printCalibration(*(listCalibration + i));
+        print_calibration(*(listCalibration + i));
 }
 
 HSV center[50][50];
@@ -153,7 +217,7 @@ void calibrate_color_profile(char *object_name, char *bitmap_file, char *calibra
     int midX = bmp.width / 2;
     int midY = bmp.height / 2;
     //(50,50) => 25,25
-    int min_hue = INT_MAX, max_hue = INT_MIN;
+    int min_hue = MY_INT_MAX, max_hue = MY_INT_MIN;
 
     for (int i = midY - 25, m = 0; i < midY + 25 && m < 50; i++, m++)
     {
@@ -161,7 +225,7 @@ void calibrate_color_profile(char *object_name, char *bitmap_file, char *calibra
         {
             center[m][n] = rgb2hsv(bmp.pixels[i][j]);
 
-            // update saturation and value meet the thresholds
+            // update saturation and value that meet the thresholds
             if (center[m][n].saturation >= MIN_SATURATION && center[m][n].value >= MIN_VALUE)
             {
                 min_hue = get_min(min_hue, center[m][n].hue);
@@ -172,7 +236,7 @@ void calibrate_color_profile(char *object_name, char *bitmap_file, char *calibra
 
     // printf("%d %d\n", minHue, maxHue);
     int middle_hue = hue_midpoint(min_hue, max_hue);
-    int max_hue_difference = hue_difference(min_hue, max_hue);
+    int max_hue_difference = hue_difference(min_hue, max_hue) / 2;
 
     // for (int i = 0; i < 50; i++)
     // {
@@ -223,7 +287,7 @@ void generate_regions(Bitmap01 *bitmap01)
         }
     }
 
-    memset(bitmap01->regions, 0, sizeof(bitmap01->regions));
+    memset(bitmap01->regions, 0, sizeof(int) * bitmap01->h * bitmap01->w);
 
     for (int i = 0; i < bitmap01->h; i++)
         for (int j = 0; j < bitmap01->w; j++)
@@ -246,16 +310,18 @@ void bounding_boxes(Bitmap01 *bitmap01)
     // initialize bounding boxes
     for (int i = 0; i < bitmap01->nbRegions; i++)
     {
-        bitmap01->boundingBoxes[i].max_x = bitmap01->boundingBoxes[i].max_y = INT_MIN;
-        bitmap01->boundingBoxes[i].min_x = bitmap01->boundingBoxes[i].min_y = INT_MAX;
+        bitmap01->boundingBoxes[i].max_x = bitmap01->boundingBoxes[i].max_y = MY_INT_MIN;
+        bitmap01->boundingBoxes[i].min_x = bitmap01->boundingBoxes[i].min_y = MY_INT_MAX;
     }
 
     // update bounding boxes
     int region;
     for (int i = 0; i < bitmap01->h; i++)
         for (int j = 0; j < bitmap01->w; j++)
-            if (region = bitmap01->regions[i][j])
+            if (bitmap01->regions[i][j])
             {
+                region = bitmap01->regions[i][j];
+
                 bitmap01->boundingBoxes[region - 1].max_x = get_max(bitmap01->boundingBoxes[region - 1].max_x, j);
 
                 bitmap01->boundingBoxes[region - 1].max_y = get_max(bitmap01->boundingBoxes[region - 1].max_y, i);
@@ -335,7 +401,7 @@ void draw_boxes(Bmp bmp, Bitmap01 bitmap01)
 
 int main(int argc, char **argv)
 {
-    if (checkInput(argc, argv) == false)
+    if (check_input(argc, argv) == false)
         return 0;
 
     char *mode = argv[1];
@@ -345,10 +411,13 @@ int main(int argc, char **argv)
     {
         // Get calibration file path from argument vector.
         char *calibrationFilepath = argv[2];
-        // read calibrations into an array
-        listCalibration = readCalibration(calibrationFilepath, &nbCalibration);
 
-        printf("Number of calibration: %d\n", nbCalibration);
+        // read calibrations into an array
+        // listCalibration = read_calibration(calibrationFilepath, &nbCalibration);
+
+        listCalibration = read_calibration_with_function(calibrationFilepath, &nbCalibration);
+
+        // printf("Number of calibration: %d\n", nbCalibration);
 
         if (strcmp(mode, "s") == 0)
         {
@@ -357,6 +426,10 @@ int main(int argc, char **argv)
         }
         else // mode == "d" - detect object
         {
+            // printf("We are here\n");
+            displayCalibration();
+
+            // return 0;
             // do something here
             Bitmap01 *bitmap01s = malloc(nbCalibration * sizeof(Bitmap01));
             char *bitmap_file = argv[3];
@@ -370,14 +443,19 @@ int main(int argc, char **argv)
             {
                 generate_blackwhite(&bmp, &bitmap01s[i], listCalibration[i]);
 
+                write_threshold_image(bmp, &bitmap01s[i]);
+
                 // them code export file black_white va co calibration_name
                 generate_regions(&bitmap01s[i]);
 
                 bounding_boxes(&bitmap01s[i]);
 
                 write_threshold_image(bmp_with_threshold, &bitmap01s[i]);
+
                 draw_boxes(bmp_with_boxes, bitmap01s[i]);
             }
+
+            write_bmp(bmp_with_threshold, "image_with_threshold.bmp");
 
             write_bmp(bmp_with_boxes, "image_with_box.bmp");
         }
