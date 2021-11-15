@@ -7,5 +7,6 @@ gcc cam_detect.c -o cam_detect
 
 ./cam_detect c orangeblock images/orangeblock.bmp
 ./cam_detect c blueblock images/blueblock.bmp
-./cam_detect c greenblock images/greenblock.bmp
+./cam_detect c greenblock images/greenblob.bmp
+
 
